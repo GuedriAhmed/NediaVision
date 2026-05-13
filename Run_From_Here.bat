@@ -48,6 +48,7 @@ echo %GOLD%Available modes:%RESET%
 echo %SOFTMINT%  [1] Text   - create a new image from a text prompt%RESET%
 echo %SOFTMINT%  [2] Edit   - transform an existing image with an AI prompt%RESET%
 echo %SOFTMINT%  [3] Filter - apply an exact image filter like grayscale or blur%RESET%
+echo %SOFTMINT%  [4] Inpaint - regenerate only a masked part of an image%RESET%
 echo.
 echo %GOLD%Choose a mode first, then follow the instructions shown after that.%RESET%
 echo %CREAM%--%RESET%
@@ -60,12 +61,14 @@ if /I "%MODE%"=="" set "MODE=text"
 if /I "%MODE%"=="1" set "MODE=text"
 if /I "%MODE%"=="2" set "MODE=edit"
 if /I "%MODE%"=="3" set "MODE=filter"
+if /I "%MODE%"=="4" set "MODE=inpaint"
 if /I "%MODE%"=="text" goto mode_ok
 if /I "%MODE%"=="edit" goto mode_ok
 if /I "%MODE%"=="filter" goto mode_ok
+if /I "%MODE%"=="inpaint" goto mode_ok
 
 echo.
-echo %RED%Invalid mode. Use text, edit, filter, 1, 2, or 3.%RESET%
+echo %RED%Invalid mode. Use text, edit, filter, inpaint, 1, 2, 3, or 4.%RESET%
 exit /b 1
 
 :mode_ok
@@ -128,6 +131,60 @@ if /I "%MODE%"=="text" (
     )
 
     py -3.11 run.py --input-image "!IMAGEPATH!" --filter !FILTERNAME!
+) else if /I "%MODE%"=="inpaint" (
+    echo %GOLD%Inpaint mode selected.%RESET%
+    echo %SOFTMINT%Next step 1: type a prompt describing what should appear in the masked area.%RESET%
+    echo %SOFTMINT%Next step 2: paste the full path of the base image.%RESET%
+    echo %SOFTMINT%Next step 3: paste the full path of a black-and-white mask image.%RESET%
+    echo %SOFTMINT%White areas will be regenerated. Black areas will be preserved.%RESET%
+    echo %SOFTMINT%Next step 4: choose a strength value for how strongly the masked zone should change.%RESET%
+    echo.
+    set "IMAGEPATH="
+    set "MASKPATH="
+    set "STRENGTH="
+    set "USER_PROMPT="
+    set /p USER_PROMPT=%CREAM%%BOLD%guest @ nediavision.ai:$ ~ prompt %CORAL%^> %RESET%
+    if "!USER_PROMPT!"=="" (
+        echo.
+        echo %RED%No prompt entered. Exiting.%RESET%
+        exit /b 1
+    )
+    set /p IMAGEPATH=%CREAM%%BOLD%guest @ nediavision.ai:$ ~ image-path %CORAL%^> %RESET%
+    if "!IMAGEPATH!"=="" (
+        echo.
+        echo %RED%No image path entered. Exiting.%RESET%
+        pause
+        exit /b 1
+    )
+    if not exist "!IMAGEPATH!" (
+        echo.
+        echo %RED%Image file not found:%RESET%
+        echo %CREAM%!IMAGEPATH!%RESET%
+        pause
+        exit /b 1
+    )
+    set /p MASKPATH=%CREAM%%BOLD%guest @ nediavision.ai:$ ~ mask-path %CORAL%^> %RESET%
+    if "!MASKPATH!"=="" (
+        echo.
+        echo %RED%No mask path entered. Exiting.%RESET%
+        pause
+        exit /b 1
+    )
+    if not exist "!MASKPATH!" (
+        echo.
+        echo %RED%Mask file not found:%RESET%
+        echo %CREAM%!MASKPATH!%RESET%
+        pause
+        exit /b 1
+    )
+    echo.
+    echo %SOFTMINT%If you are not sure, type 0.6 as a balanced starting point.%RESET%
+    echo %SOFTMINT%Use lower values to preserve more structure and higher values for bigger masked changes.%RESET%
+    echo.
+    set /p STRENGTH=%CREAM%%BOLD%guest @ nediavision.ai:$ ~ strength %CORAL%^> %RESET%
+    if "!STRENGTH!"=="" set "STRENGTH=0.6"
+
+    py -3.11 run.py --prompt "!USER_PROMPT!" --input-image "!IMAGEPATH!" --mask-image "!MASKPATH!" --strength !STRENGTH! --device auto --low-spec
 ) else (
     echo %GOLD%Edit mode selected.%RESET%
     echo %SOFTMINT%Next step 1: type an edit prompt that describes how the image should change.%RESET%

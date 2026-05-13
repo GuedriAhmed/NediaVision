@@ -40,6 +40,11 @@ def parse_args():
         help="Optional path to an input image for image-to-image generation.",
     )
     parser.add_argument(
+        "--mask-image",
+        default=None,
+        help="Optional path to a black-and-white mask image for inpainting. White areas are regenerated.",
+    )
+    parser.add_argument(
         "--output",
         default=None,
         help="Optional output image path. If omitted, a numbered file is created automatically.",
@@ -215,6 +220,8 @@ def main():
 
     if not args.prompt:
         raise ValueError("--prompt is required for text-to-image and image-to-image generation")
+    if args.mask_image and not args.input_image:
+        raise ValueError("--input-image is required when using --mask-image")
 
     device = resolve_device(args.device)
     idle_device = "cpu"
@@ -232,6 +239,7 @@ def main():
     models = model_loader.preload_models_from_standard_weights(str(model_file), device)
 
     input_image = Image.open(args.input_image).convert("RGB") if args.input_image else None
+    mask_image = Image.open(args.mask_image).convert("L") if args.mask_image else None
 
     print(f"Using device: {device}")
     print(f"Platform: {platform.system()} {platform.release()}")
@@ -246,6 +254,7 @@ def main():
         prompt=args.prompt,
         uncond_prompt=args.negative_prompt,
         input_image=input_image,
+        mask_image=mask_image,
         strength=args.strength,
         do_cfg=True,
         cfg_scale=settings["cfg_scale"],
@@ -274,6 +283,7 @@ def main():
             "prompt": args.prompt,
             "negative_prompt": args.negative_prompt,
             "input_image": str(Path(args.input_image).resolve()) if args.input_image else None,
+            "mask_image": str(Path(args.mask_image).resolve()) if args.mask_image else None,
             "output_image": str(output_path.resolve()),
             "noise_image": str(noise_output_path.resolve()),
             "device": device,

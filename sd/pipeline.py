@@ -28,6 +28,7 @@ def generate(
     prompt,
     uncond_prompt=None,
     input_image=None,
+    mask_image=None,
     strength=0.8,
     do_cfg=True,
     cfg_scale=7.5,
@@ -43,11 +44,29 @@ def generate(
     show_progress=True,
     return_noise_preview=False,
 ):
+    def preprocess_image(image):
+        image = image.resize((width, height))
+        image = np.array(image)
+        image = torch.tensor(image, dtype=torch.float32, device=device)
+        image = rescale(image, (0, 255), (-1, 1))
+        image = image.unsqueeze(0)
+        return image.permute(0, 3, 1, 2)
+
+    def preprocess_mask(mask):
+        mask = mask.resize((latents_width, latents_height))
+        mask = np.array(mask, dtype=np.float32) / 255.0
+        mask = torch.tensor(mask, dtype=torch.float32, device=device)
+        mask = (mask > 0.5).to(torch.float32)
+        mask = mask.unsqueeze(0).unsqueeze(0)
+        return mask
+
     with torch.inference_mode():
         if not 0 < strength <= 1:
             raise ValueError("strength must be between 0 and 1")
         if width % 8 != 0 or height % 8 != 0:
             raise ValueError("width and height must be divisible by 8")
+        if mask_image is not None and input_image is None:
+            raise ValueError("mask_image requires an input_image")
 
         latents_width = width // 8
         latents_height = height // 8
@@ -105,31 +124,30 @@ def generate(
 
         latents_shape = (1, 4, latents_height, latents_width)
 
+        init_latents = None
+        mask = None
+        latent_noise = None
+
         if input_image:
             encoder = models["encoder"]
             encoder.to(device)
 
-            input_image_tensor = input_image.resize((width, height))
-            # (Height, Width, Channel)
-            input_image_tensor = np.array(input_image_tensor)
-            # (Height, Width, Channel) -> (Height, Width, Channel)
-            input_image_tensor = torch.tensor(input_image_tensor, dtype=torch.float32, device=device)
-            # (Height, Width, Channel) -> (Height, Width, Channel)
-            input_image_tensor = rescale(input_image_tensor, (0, 255), (-1, 1))
-            # (Height, Width, Channel) -> (Batch_Size, Height, Width, Channel)
-            input_image_tensor = input_image_tensor.unsqueeze(0)
-            # (Batch_Size, Height, Width, Channel) -> (Batch_Size, Channel, Height, Width)
-            input_image_tensor = input_image_tensor.permute(0, 3, 1, 2)
+            input_image_tensor = preprocess_image(input_image)
 
             # (Batch_Size, 4, Latents_Height, Latents_Width)
             encoder_noise = torch.randn(latents_shape, generator=generator, device=device)
             # (Batch_Size, 4, Latents_Height, Latents_Width)
-            latents = encoder(input_image_tensor, encoder_noise)
+            init_latents = encoder(input_image_tensor, encoder_noise)
+            latent_noise = torch.randn(latents_shape, generator=generator, device=device)
 
             # Add noise to the latents (the encoded input image)
             # (Batch_Size, 4, Latents_Height, Latents_Width)
             sampler.set_strength(strength=strength)
-            latents = sampler.add_noise(latents, sampler.timesteps[0])
+            latents = sampler.add_noise(init_latents, sampler.timesteps[0], noise=latent_noise)
+
+            if mask_image is not None:
+                mask = preprocess_mask(mask_image)
+                latents = mask * latents + (1 - mask) * init_latents
 
             to_idle(encoder)
         else:
@@ -149,6 +167,10 @@ def generate(
             for timestep in sampler.timesteps.tolist()
         }
         for i, timestep in enumerate(timesteps):
+            if mask is not None:
+                source_latents = sampler.add_noise(init_latents, timestep, noise=latent_noise)
+                latents = mask * latents + (1 - mask) * source_latents
+
             # (1, 320)
             time_embedding = time_embeddings[int(timestep)]
 
@@ -169,6 +191,14 @@ def generate(
 
             # (Batch_Size, 4, Latents_Height, Latents_Width) -> (Batch_Size, 4, Latents_Height, Latents_Width)
             latents = sampler.step(timestep, latents, model_output)
+
+            if mask is not None:
+                prev_timestep = sampler._get_previous_timestep(int(timestep))
+                if prev_timestep >= 0:
+                    source_latents = sampler.add_noise(init_latents, prev_timestep, noise=latent_noise)
+                else:
+                    source_latents = init_latents
+                latents = mask * latents + (1 - mask) * source_latents
 
         to_idle(diffusion)
 
