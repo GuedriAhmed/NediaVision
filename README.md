@@ -1,5 +1,9 @@
-# pytorch-stable-diffusion
-PyTorch implementation of Stable Diffusion from scratch
+# NediaVision
+NediaVision is a custom AI image generation project built on a PyTorch implementation of Stable Diffusion inference.
+
+## Launch the project
+
+Run `Run_From_Here.bat` for the branded terminal interface, or use `sd/run.py` directly for command-line usage.
 
 ## Download weights and tokenizer files:
 
@@ -21,4 +25,3 @@ Special thanks to the following repositories:
 1. https://github.com/divamgupta/stable-diffusion-tensorflow
 1. https://github.com/kjsman/stable-diffusion-pytorch
 1. https://github.com/huggingface/diffusers/
-

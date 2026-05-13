@@ -17,7 +17,7 @@ SECTIONS = [
             "Project name: NediaVision",
             "Author branding used in the launcher: nedia melki",
             "Academic framing: Final Year Project, 2025-2026",
-            "Repository type: local PyTorch Stable Diffusion implementation with a custom terminal launcher",
+            "Repository type: NediaVision, a local PyTorch Stable Diffusion implementation with a custom terminal launcher",
         ],
     ),
     (
@@ -36,9 +36,9 @@ SECTIONS = [
             "Root folder contains the main project files, the data folder, the sd source folder, the launcher batch file, and generated images.",
             "data/ contains vocab.json, merges.txt, v1-5-pruned-emaonly.ckpt, and the local Hugging Face cache folder.",
             "sd/ contains the Python source files that implement the model and pipeline.",
-            "run_text_to_image.bat is the terminal-style launcher.",
+            "Run_From_Here.bat is the terminal-style launcher.",
             "sd/run.py is the Python entry point for generation.",
-            "generated.png is the default output image produced by the script.",
+            "generatedoutputs/ stores the numbered output images produced by the script.",
         ],
     ),
     (
@@ -55,7 +55,7 @@ SECTIONS = [
     (
         "How Generation Starts",
         [
-            "The user runs run_text_to_image.bat.",
+            "The user runs Run_From_Here.bat.",
             "The batch file displays a styled terminal theme and asks the user to enter a prompt.",
             "The prompt is saved in the batch variable PROMPT.",
             "The batch file then calls Python with the command: py -3.11 run.py --prompt \"%PROMPT%\" --device auto",
@@ -63,7 +63,7 @@ SECTIONS = [
         ],
     ),
     (
-        "Role of run_text_to_image.bat",
+        "Role of Run_From_Here.bat",
         [
             "It is the user-facing launcher.",
             "It creates the terminal look and branding for NediaVision.",
@@ -91,7 +91,7 @@ SECTIONS = [
             "args.prompt: the main text prompt entered by the user.",
             "args.negative_prompt: the negative or unconditional prompt. Default is an empty string.",
             "args.input_image: optional image path for image-to-image mode.",
-            "args.output: output image path. Default points to generated.png in the root folder.",
+            "args.output: output image path. If omitted, a numbered file is created automatically inside generatedoutputs/.",
             "args.steps: number of denoising steps. Default is 50.",
             "args.cfg_scale: classifier-free guidance strength. Default is 7.5.",
             "args.strength: image-to-image strength. Default is 0.8.",
@@ -301,7 +301,7 @@ SECTIONS = [
             "After pipeline.generate(...) returns a NumPy image array, run.py calls Image.fromarray(image).save(output_path).",
             "Image.fromarray(...) converts the NumPy array into a Pillow image object.",
             "save(output_path) writes the generated image to disk.",
-            "The default output path is generated.png in the project root.",
+            "The default output path is an automatically numbered file inside generatedoutputs/.",
         ],
     ),
     (
@@ -322,17 +322,17 @@ SECTIONS = [
             "A CUDA-enabled PyTorch build was installed to use the NVIDIA GPU.",
             "A setuptools compatibility issue was solved so checkpoint loading would work.",
             "A custom run.py launcher was added for easier command-line usage.",
-            "A themed run_text_to_image.bat launcher was added for easier interactive usage.",
+            "A themed Run_From_Here.bat launcher was added for easier interactive usage.",
         ],
     ),
     (
         "How to Run the Project",
         [
-            "Double-click run_text_to_image.bat.",
+            "Double-click Run_From_Here.bat.",
             "Wait for the terminal theme to appear.",
             "Type a prompt when asked.",
             "Press Enter.",
-            "The script will use run.py, load the models, generate the image, and save it to generated.png.",
+            "The script will use run.py, load the models, generate the image, and save it inside generatedoutputs/.",
         ],
     ),
     (

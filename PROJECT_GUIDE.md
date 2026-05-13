@@ -1,8 +1,8 @@
-# Project Guide: `pytorch-stable-diffusion`
+# Project Guide: `NediaVision`
 
 ## 1. What this project is
 
-This repository is a **PyTorch reimplementation of Stable Diffusion inference**.
+This repository is **NediaVision**, a custom project built on a **PyTorch reimplementation of Stable Diffusion inference**.
 
 In simple words:
 
@@ -11,7 +11,7 @@ In simple words:
 - It **does not train a model from scratch**.
 - It expects **pretrained weights** and tokenizer files to be downloaded separately.
 
-So this project is mainly an **implementation of the architecture and generation pipeline**, not a full training framework.
+So NediaVision is mainly an **implementation of the architecture and generation pipeline**, not a full training framework.
 
 ## 2. Main idea of the project
 
@@ -883,4 +883,3 @@ In even simpler language:
 You can describe it like this:
 
 > This project is not a training framework for building a diffusion model from scratch. It is an inference-oriented PyTorch implementation of Stable Diffusion. The repository defines the architecture modules manually, loads pretrained weights from an external checkpoint, converts text prompts into embeddings, performs latent denoising step by step with DDPM, and decodes the final latent into an image.
-
