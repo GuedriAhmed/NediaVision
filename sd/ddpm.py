@@ -100,7 +100,10 @@ class DDPMSampler:
         noise: torch.FloatTensor | None = None,
     ) -> torch.FloatTensor:
         alphas_cumprod = self.alphas_cumprod.to(device=original_samples.device, dtype=original_samples.dtype)
-        timesteps = timesteps.to(original_samples.device)
+        if not isinstance(timesteps, torch.Tensor):
+            timesteps = torch.tensor(timesteps, dtype=torch.long, device=original_samples.device)
+        else:
+            timesteps = timesteps.to(original_samples.device)
 
         sqrt_alpha_prod = alphas_cumprod[timesteps] ** 0.5
         sqrt_alpha_prod = sqrt_alpha_prod.flatten()

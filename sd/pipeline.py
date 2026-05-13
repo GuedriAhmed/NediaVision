@@ -3,6 +3,7 @@ import numpy as np
 from torch.nn import functional as F
 from tqdm import tqdm
 from ddpm import DDPMSampler
+from PIL import Image
 
 DEFAULT_WIDTH = 512
 DEFAULT_HEIGHT = 512
@@ -53,7 +54,7 @@ def generate(
         return image.permute(0, 3, 1, 2)
 
     def preprocess_mask(mask):
-        mask = mask.resize((latents_width, latents_height))
+        mask = mask.resize((latents_width, latents_height), resample=Image.NEAREST)
         mask = np.array(mask, dtype=np.float32) / 255.0
         mask = torch.tensor(mask, dtype=torch.float32, device=device)
         mask = (mask > 0.5).to(torch.float32)
@@ -147,7 +148,8 @@ def generate(
 
             if mask_image is not None:
                 mask = preprocess_mask(mask_image)
-                latents = mask * latents + (1 - mask) * init_latents
+                masked_latents = torch.randn(latents_shape, generator=generator, device=device)
+                latents = mask * masked_latents + (1 - mask) * latents
 
             to_idle(encoder)
         else:

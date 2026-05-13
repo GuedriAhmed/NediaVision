@@ -178,11 +178,11 @@ if /I "%MODE%"=="text" (
         exit /b 1
     )
     echo.
-    echo %SOFTMINT%If you are not sure, type 0.6 as a balanced starting point.%RESET%
-    echo %SOFTMINT%Use lower values to preserve more structure and higher values for bigger masked changes.%RESET%
+    echo %SOFTMINT%If you are not sure, type 0.85 as a strong inpainting starting point.%RESET%
+    echo %SOFTMINT%Use lower values to keep more of the original masked content and higher values for a fuller redraw.%RESET%
     echo.
     set /p STRENGTH=%CREAM%%BOLD%guest @ nediavision.ai:$ ~ strength %CORAL%^> %RESET%
-    if "!STRENGTH!"=="" set "STRENGTH=0.6"
+    if "!STRENGTH!"=="" set "STRENGTH=0.85"
 
     py -3.11 run.py --prompt "!USER_PROMPT!" --input-image "!IMAGEPATH!" --mask-image "!MASKPATH!" --strength !STRENGTH! --device auto --low-spec
 ) else (
